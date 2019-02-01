@@ -4,6 +4,16 @@ title: Language Oriented Programming
 date: February 2019
 ---
 
+# Thesis
+
+  1. When working on specific software component, it convenint to
+     have a custom DSL specifically tailored to the component.
+
+  2. This is the essence of "monadic" programming.
+
+  3. It is interesting to consider what features does a host languge
+     need to support this style of software development.
+
 
 # Languages
 
@@ -13,18 +23,22 @@ date: February 2019
   * Micor DSL construction kit
 
 
-# Language Basics
+# Language Primitives
 
-  * Expressions are "pure"
-      - Evaluate to values
+  * _Expressions_ are pure
+      - evaluate to values
+      - flexible evalutaion order
+      - example: combinatorial circuits
 
-  * Statements are "effectful"
+  * _Statements_ are effectful
+      - have a notion of sequencing
       - do this, then do that
+      - example: a recipie
 
 
 # Monads
 
-  * Languages that use statements
+A _monad_ is a language that uses statements.
 
 
 # Notation
@@ -40,26 +54,66 @@ date: February 2019
 
 # Sequencing Statements
 
-  * If
+We can combine statements to form more complex ones:
+
+  * If:
       - `s1 : L a`
-      - `s2 : L b`, with a free `x : a`
-  * then
-      * `{ val x = s1; s2 } : L b`
-      * Or, in Haskell notation:
-        ```haskell
-        do x <- s1
-           s2
-        ```
-
-# 
+      - `s2 : L b`, with a free variable `x : a`
+  * Then:
+      - `do { x <- s1; s2 } : L b`
 
 
+# Promoting Expressions to Statements
 
-# Thesis
 
-  * "Monadic" programming has a different flavor from
-     other programming paradigms
+  * If:
+      - `e : a` (an expression)
+  * Then:
+      - `pure e : L a`  (a statement that just produces `e`)
 
-  * It would be interesting to de
+  * In many languages this is implicit.
+
+# Monad Laws = Resonable Behavior
+
+  * The grouping of staments is not important:
+
+
+```haskell
+do { y <- do { x <- s1; s2 }; s3 } =
+do { x <- s1; do { y <- s2; s3 } } =
+do { x <- s1; y <- s2; s3 }
+```
+(as long as names don't get captured)
+
+  * Expression statements don't have effects:
+
+```haskell
+do { x <- pure x; s } =
+s                     =
+do { x <- s; pure x }
+```
+
+
+# Effects
+
+  * The monadic strucutre provides just the bare minimum.
+  * The interesting part are the statements that introduce effects.
+
+```haskell
+getGreeting :: IO String
+getGreeting =
+  do putStrLn "What is your name?"
+     x <- getLine
+     pure ("Hello, " ++ x)
+
+main :: IO ()
+main =
+  do msg <- getGreeting
+     putStrLn msg
+```
+
+# A Menagerie of Simple Language Features
+
+
 
 
