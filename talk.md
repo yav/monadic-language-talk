@@ -51,15 +51,6 @@ date: February 2019
            s2
         ```
 
-# 
 
 
-
-# Thesis
-
-  * "Monadic" programming has a different flavor from
-     other programming paradigms
-
-  * It would be interesting to de
-
-
+#
