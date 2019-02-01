@@ -15,12 +15,7 @@ date: February 2019
      need to support this style of software development.
 
 
-# Languages
 
-  * (XXX)
-  * General purpose: complex, multiparadigm
-  * DSLs: often grow into full languages
-  * Micor DSL construction kit
 
 
 # Language Primitives
