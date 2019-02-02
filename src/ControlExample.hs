@@ -4,10 +4,11 @@ import ML
 import Tree
 
 type BTL =
-  Language Pure
+  DeclareLanguage
     [ Throws String
     , Backtracks
     ]
+    Pure
 
 example :: Tree -> BTL ()
 example t =

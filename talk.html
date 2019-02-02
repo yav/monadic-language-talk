@@ -174,6 +174,24 @@ main <span class="fu">=</span>
 </ul></li>
 </ul>
 </section>
+<section id="three-questions" class="slide level1">
+<h1>Three Questions</h1>
+<ol type="1">
+<li>How do we specify the features of a custom language?</li>
+<li>How do we write programs in a custom language?</li>
+<li>How do we execute programs in the language?</li>
+</ol>
+</section>
+<section id="modular-language-construction" class="slide level1">
+<h1>Modular Language Construction</h1>
+<p>Start with a language of <em>primitives</em>, and extended with desired <em>features</em>.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="dt">DeclareLanguage</span>
+  prim          <span class="co">-- Language of primitives</span>
+  [ f3          <span class="co">-- Feature 3</span>
+  , f2          <span class="co">-- Feature 2</span>
+  , f1          <span class="co">-- Feature 1</span>
+  ]</code></pre></div>
+</section>
     </div>
   </div>
 

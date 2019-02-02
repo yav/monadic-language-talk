@@ -137,5 +137,25 @@ main =
       - Backtracking    (search)
       - Continutations  (coroutines)
 
+# Three Questions
+
+  1. How do we specify the features of a custom language?
+  2. How do we write programs in a custom language?
+  3. How do we execute programs in the language?
+
+
+# Modular Language Construction
+
+Start with a language of _primitives_, and extended with
+desired _features_.
+
+```Haskell
+DeclareLanguage
+  prim          -- Language of primitives
+  [ f3          -- Feature 3
+  , f2          -- Feature 2
+  , f1          -- Feature 1
+  ]
+```
 
 

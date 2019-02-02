@@ -2,32 +2,36 @@
 
 import ML
 
-
+-- Names
 data Older = Older
 data Old   = Old
 
+-- The languae
 type FibFL =
-  Language Pure
-    '[ Mut Old Int
-     , Mut Older Int
-     ]
+  DeclareLanguage
+    [ Mut Old   Int
+    , Mut Older Int
+    ]
+    Pure
+
+-- The program
+fibCode :: Int -> FibFL Int
+fibCode n =
+  do replicateM_ n
+      do old   <- getMut Old
+         older <- getMut Older
+         setMut Older old
+         setMut Old (old + older)
+     getMut Older
 
 
-
-fibM :: Int -> FibFL ()
-fibM n =
-  replicateM_ n
-  do old   <- getMut Old
-     older <- getMut Older
-     setMut Older old
-     setMut Old (old + older)
-
-fib n = run setup
-  do fibM n
-     getMut Old
+-- Running the program
+fib :: Int -> Int
+fib n = result
   where
-  setup =
-    Old   := 1 :&
-    Older := 1 :&
-    EndInit
+  ((result, _), _) =
+    compile
+      (fibCode n)
+      (Old    := 1)
+      (Older  := 0)
 

@@ -172,9 +172,9 @@ instance Language m => Monad (Backtracks m) where
 
 -- | Declare a new language with the given primitives, and some additional
 -- features.
-type family DeclareLanguage prim features :: * -> * where
-  DeclareLanguage prim (f ': more) = f (DeclareLanguage prim more)
-  DeclareLanguage prim '[]         = prim
+type family DeclareLanguage features prim :: * -> * where
+  DeclareLanguage (f ': more) prim = f (DeclareLanguage more prim)
+  DeclareLanguage '[]         prim = prim
 
 
 --------------------------------------------------------------------------------
@@ -530,13 +530,14 @@ val (_ := t) m = unV m t
 -- a mutable variable @x@, to one that does not use @x@ explicitly.
 -- The resulting program returns the final value of @x@ in addition
 -- to its result.
-mut :: Language m => x := t -> Mut x t m a -> m (a,t)
-mut (_ := t) m = unM m t
+mut :: Language m => x := t -> Mut x t m a -> m (a, x := t)
+mut (x := t) m = do (a,t') <- unM m t
+                    pure (a, x := t')
 
 -- | Compile a program with a collector @x@ to one that does not
 -- collect explicitly.  The new program returns the collected values,
 -- in addition to the original program's result.
-collector :: Language m => Collector x t m a -> m (a,[t])
+collector :: Language m => Collector x t m a -> m (a, [t])
 collector m = do (a,xs) <- unC m
                  pure (a, xs [])
 
@@ -576,11 +577,11 @@ instance Compile m => Compile (Val x t m) where
   compile m x = compile (val x m)
 
 instance Compile m => Compile (Mut x t m) where
-  type ExeResult (Mut x t m) a = x := t -> ExeResult m (a,t)
+  type ExeResult (Mut x t m) a = x := t -> ExeResult m (a,x := t)
   compile m x = compile (mut x m)
 
 instance Compile m => Compile (Collector x t m) where
-  type ExeResult (Collector x t m) a = ExeResult m (a,[t])
+  type ExeResult (Collector x t m) a = ExeResult m (a, [t])
   compile m = compile (collector m)
 
 instance Compile m => Compile (Throws t m) where
