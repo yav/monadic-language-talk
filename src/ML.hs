@@ -49,7 +49,7 @@ module ML
   , mut
   , collector
   , throws, Except(..)
-  , backtracks, Answers(..)
+  , backtracks
   , noEffects
   , withIO
   , Compile(..)
@@ -58,6 +58,7 @@ module ML
   , LetVal(..)
   , CanCollect(..)
   , CanCatch(..)
+  , CanSearch(..)
 
     -- * Misc
   , Language
@@ -129,13 +130,20 @@ bThen m f =
        NoAnswer -> pure NoAnswer
        Answer a more -> bPlus (f a) (more `bThen` f)
 
+findAll :: Language m => [a] -> m (Answers m a) -> m [a]
+findAll xs m = do ans <- m
+                  case ans of
+                    NoAnswer -> pure (reverse xs)
+                    Answer a more -> findAll (a:xs) more
 
+findN :: Language m => Int -> [a] -> m (Answers m a) -> m [a]
+findN n xs m = if n <= 0
+                then pure (reverse xs)
+                else do ans <- m
+                        case ans of
+                          NoAnswer -> pure (reverse xs)
+                          Answer a more -> findN (n-1) (a:xs) more
 
-instance Show a => Show (Answers m a) where
-  showsPrec n x = case x of
-                    NoAnswer -> showString "NoAnswer"
-                    Answer a _ ->
-                      showParen (n > 1) (showString "Answer " . showsPrec 1 a)
 
 
 instance Monad Pure where
@@ -468,7 +476,44 @@ instance CanCatch t m => CanCatch t (Backtracks m) where
 
 
 
+-- | Language @m@ supports finding the answers of a local backtracking block.
+class CanBacktrack m => CanSearch m where
+  findUpTo :: Maybe Int -> m a -> m [a]
+  -- ^ The input parameter optionally imposes an upper bound on the number
+  -- of answers to return.
 
+instance CanSearch m => CanSearch (Val x t m) where
+  findUpTo lim m = V $ \t -> findUpTo lim (unV m t)
+
+-- | This operation does not modify the mutable variable, and the final
+-- values of the variable in each branch are discarded.  If they are of
+-- interest, return them as part of the result of the computation.
+instance CanSearch m => CanSearch (Mut x t m) where
+  findUpTo lim m = M $ \t -> do xs <- findUpTo lim (unM m t)
+                                pure (map fst xs, t)
+
+-- | This operation does not produce any output.  The outputs of the
+-- individaul threads are discarded.  If the output is of interest,
+-- then use 'collect' to make it part of the result.
+instance CanSearch m => CanSearch (Collector x t m) where
+  findUpTo lim m = C $ do xs <- findUpTo lim (unC m)
+                          pure (map fst xs, id)
+
+-- | Threads that throw an exception count towards the limit, but
+-- they do not produce an entry in the final list.  If you'd like to
+-- know if a thread would throw an exception, use 'try' to make that
+-- part of the result.
+instance CanSearch m => CanSearch (Throws t m) where
+  findUpTo lim m = T $ \k -> do xs <- findUpTo lim (unT m xPure)
+                                k [ x | Success x <- xs ]
+
+instance Language m => CanSearch (Backtracks m) where
+  findUpTo lim m = B $ \k ->
+    do let stmt = unB m bPure
+       ans <- case lim of
+                Nothing -> findAll [] stmt
+                Just n  -> findN n [] stmt
+       k ans
 
 --------------------------------------------------------------------------------
 -- Removing feaures, one at a time
@@ -502,11 +547,15 @@ collector m = do (a,xs) <- unC m
 throws :: Language m => Throws t m a -> m (Except t a)
 throws m = unT m (pure . Success)
 
--- | Compile a program that may backtrack, to one that does not do so
--- explictly. The resulting program may return zero or multiple answers,
--- see 'Answers' for details.
-backtracks :: Language m => Backtracks m a -> m (Answers m a)
-backtracks m = unB m bPure
+{- | Compile a program that may backtrack, to one that does not do so
+explictly. The resulting program may return zero or more answers.
+The input parameter optionally specifies an upper bound on the
+nubmer of required answers. -}
+backtracks :: Language m => Maybe Int -> Backtracks m a -> m [a]
+backtracks lim m0 = case lim of
+                      Nothing -> findAll [] prog
+                      Just n  -> findN n [] prog
+  where prog = unB m0 bPure
 
 -- | A program with no effects can be compiled to a value.
 noEffects :: Pure a -> a
@@ -539,8 +588,8 @@ instance Compile m => Compile (Throws t m) where
   compile m = compile (throws m)
 
 instance Compile m => Compile (Backtracks m) where
-  type ExeResult (Backtracks m) a = ExeResult m (Answers m a)
-  compile m = compile (backtracks m)
+  type ExeResult (Backtracks m) a = Maybe Int -> ExeResult m [a]
+  compile m n = compile (backtracks n m)
 
 instance Compile Pure where
   type ExeResult Pure a = a
