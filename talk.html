@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Iavor S. Diatchki">
+  <title>Language Oriented Programming</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="./reveal.js/css/reveal.css">
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" href="./reveal.js/css/theme/moon.css" id="theme">
+  <link rel="stylesheet" href="talk.css"/>
+  <!-- Printing and PDF exports -->
+  <script>
+    var link = document.createElement( 'link' );
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match( /print-pdf/gi ) ? './reveal.js/css/print/pdf.css' : './reveal.js/css/print/paper.css';
+    document.getElementsByTagName( 'head' )[0].appendChild( link );
+  </script>
+  <!--[if lt IE 9]>
+  <script src="./reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+  <h1 class="title">Language Oriented Programming</h1>
+  <p class="author">Iavor S. Diatchki</p>
+  <p class="date">February 2019</p>
+</section>
+
+<section id="thesis" class="slide level1">
+<h1>Thesis</h1>
+<ol type="1">
+<li><p>It is convenient to implement the sub-components of a system in <em>custom programming languages</em>, tailored to the needs of the component.</p></li>
+<li><p>This is the essence of “monadic” programming.</p></li>
+<li><p>What features does a host languge need to support this style of software development?</p></li>
+</ol>
+</section>
+<section id="language-primitives" class="slide level1">
+<h1>Language Primitives</h1>
+<p><em>Expressions</em> are pure:</p>
+<ul>
+<li>evaluate to values</li>
+<li>flexible evalutaion order</li>
+<li>example: combinatorial circuits</li>
+</ul>
+<p><em>Statements</em> are effectful:</p>
+<ul>
+<li>have a notion of sequencing</li>
+<li>do this, then do that</li>
+<li>example: a recipie</li>
+</ul>
+</section>
+<section id="monads" class="slide level1">
+<h1>Monads</h1>
+<p>A <em>monad</em> is a language that uses statements.</p>
+</section>
+<section id="notation" class="slide level1">
+<h1>Notation</h1>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">s <span class="fu">:</span> <span class="dt">L</span> t</code></pre></div>
+<ul>
+<li><code>s</code> is a statement,</li>
+<li>in language <code>L</code></li>
+<li>which produces a value of type <code>t</code>.</li>
+</ul>
+<p>Example:</p>
+<div class="sourceCode"><pre class="sourceCode c"><code class="sourceCode c">getchar() : C <span class="dt">int</span></code></pre></div>
+</section>
+<section id="sequencing-statements" class="slide level1">
+<h1>Sequencing Statements</h1>
+<p>Combine statements to form more complex ones:</p>
+<p>If:</p>
+<ul>
+<li><code>s1 : L a</code></li>
+<li><code>s2 : L b</code>, with a free variable <code>x : a</code></li>
+</ul>
+<p>Then:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">do</span> { x <span class="ot">&lt;-</span> s1; s2 } <span class="fu">:</span> <span class="dt">L</span> b</code></pre></div>
+</section>
+<section id="promoting-expressions-to-statements" class="slide level1">
+<h1>Promoting Expressions to Statements</h1>
+<p>If:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">e <span class="fu">:</span> a        <span class="co">-- `e` is an expression</span></code></pre></div>
+<p>Then:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">pure e <span class="fu">:</span> <span class="dt">L</span> a</code></pre></div>
+<p>In many languages this is implicit.</p>
+</section>
+<section id="monad-laws-resonable-behavior" class="slide level1">
+<h1>Monad Laws = Resonable Behavior</h1>
+<p>The grouping of staments is not important:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">do</span> { y <span class="ot">&lt;-</span> <span class="kw">do</span> { x <span class="ot">&lt;-</span> s1; s2 }; s3 } <span class="fu">=</span>
+<span class="kw">do</span> { x <span class="ot">&lt;-</span> s1; <span class="kw">do</span> { y <span class="ot">&lt;-</span> s2; s3 } } <span class="fu">=</span>        <span class="co">-- modulo naming</span>
+<span class="kw">do</span> { x <span class="ot">&lt;-</span> s1; y <span class="ot">&lt;-</span> s2; s3 }</code></pre></div>
+<p>Expression statements don’t have effects:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">do</span> { x <span class="ot">&lt;-</span> pure x; s } <span class="fu">=</span>
+s                     <span class="fu">=</span>
+<span class="kw">do</span> { x <span class="ot">&lt;-</span> s; pure x }</code></pre></div>
+</section>
+<section id="effects" class="slide level1">
+<h1>Effects</h1>
+<ul>
+<li>Monadic strucutre = bare minimum.</li>
+<li>We need statemtns that do something.</li>
+</ul>
+<p>Example:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">getGreeting ::</span> <span class="dt">IO</span> <span class="dt">String</span>
+getGreeting <span class="fu">=</span>
+  <span class="kw">do</span> putStrLn <span class="st">&quot;What is your name?&quot;</span>
+     x <span class="ot">&lt;-</span> getLine
+     pure (<span class="st">&quot;Hello, &quot;</span> <span class="fu">++</span> x)
+
+<span class="ot">main ::</span> <span class="dt">IO</span> ()
+main <span class="fu">=</span>
+  <span class="kw">do</span> msg <span class="ot">&lt;-</span> getGreeting
+     putStrLn msg</code></pre></div>
+</section>
+<section id="classes-of-effects" class="slide level1">
+<h1>Classes of Effects</h1>
+<ul>
+<li>Data effects (aka “variables”)
+<ul>
+<li>Read-only variables (e.g., configuration)</li>
+<li>Mutable variables</li>
+<li>Write-only variables (aka “collectors”, e.g., logs)</li>
+</ul></li>
+<li>Control effects
+<ul>
+<li>Exceptions (early termination)</li>
+<li>Backtracking (search)</li>
+<li>Continutations (coroutines)</li>
+</ul></li>
+</ul>
+</section>
+    </div>
+  </div>
+
+  <script src="./reveal.js/lib/js/head.min.js"></script>
+  <script src="./reveal.js/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: './reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: './reveal.js/plugin/zoom-js/zoom.js', async: true },
+              { src: './reveal.js/plugin/notes/notes.js', async: true }
+        ]
+      });
+    </script>
+    </body>
+</html>

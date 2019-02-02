@@ -1,0 +1,94 @@
+@font-face {
+  font-family: "Inconsolata";
+  src: url("Inconsolata-Regular.ttf");
+}
+
+p { text-align: left; }
+
+/* This is probably pointless: it's to work around Google Chrome not
+centering the MathML, but Chrome doesn't even support MathML :P Using
+MathJax instead works in both browsers, but not in Pandocs
+'--self-contained' mode. */
+math[display="block"] { text-align: left; padding-left: 2em; }
+
+/* All slide content, default. Does not override equation alignment. */
+/* .slide { text-align: left; } */
+
+/* Non-title page titles. */
+.reveal .slide h1 { font-size: 200%; text-shadow: none; text-decoration: underline; }
+.reveal .slide h2 { font-size: 200%; text-shadow: none; text-decoration: underline; }
+
+
+
+/* Title slide. */
+/* .reveal .slides .title {} */
+
+/* For some reason the lines are squished by default and overlap slightly. */
+
+/* Need the 'pre code' in addition to 'pre' to apply to lines that are
+too long and stretch outside the 'pre'. Don't want unbounded 'code',
+since then in-line code would be affected. */
+
+/* Use '!important' to be sure to override any more specific settings
+in the reveal.js CSS */
+pre , pre code {
+  /* Otherwise tall characters overlap ??? */
+  line-height: 1.2 !important;
+  /* vertical-align: none !important; */
+  color: black !important;
+  background-color: #eee8d5 !important;
+  border-radius: 5px;
+}
+/* Without this the first line was indented a little more than the others. */
+pre > code {
+  padding: 0ex !important;
+  margin: 0ex !important;
+}
+pre {
+  padding: 1ex !important;
+  /* margin: 1ex !important; */
+}
+/* Inline code.
+
+
+Match any 'code' element which is a child ('>') of any element ('*')
+which is not a 'pre'. The default element relation ship, specified by
+whitespace, is decendent, not child.  See
+http://www.w3.org/TR/css3-selectors/ .
+*/
+*:not(pre) > code {
+  color: black !important;
+  background: #eee8d5 !important;
+  padding-left: 0.25ex !important;
+  padding-right: 0.25ex !important;
+  font-size: 85% !important;
+  /* Copy the font used in the display code blocks. */
+  font-family: "Inconsolata" !important;
+  /* Remove forced capitalization of code in titles. */
+  text-transform: none;
+  border-radius: 5px;
+}
+
+
+/* Take up the whole screen vertically.
+
+https://github.com/hakimel/reveal.js/issues/180 */
+
+.reveal .slides {
+  height: 100% !important;
+  top: 0 !important;
+  margin-top: 0 !important;
+}
+
+.reveal .slides>section {
+  min-height: 90% !important;
+  top: auto !important;
+}
+
+.reveal .slides>section>section {
+  min-height: 100% !important;
+}
+
+</style>
+
+
