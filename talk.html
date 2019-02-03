@@ -76,7 +76,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <ol type="1">
 <li><p>It is convenient to implement the sub-components of a system in <em>custom programming languages</em>, tailored to the needs of the component.</p></li>
 <li><p>This is the essence of “monadic” programming.</p></li>
-<li><p>What features does a host languge need to support this style of software development?</p></li>
+<li><p>What features does a host language need to support this style of software development?</p></li>
 </ol>
 </section>
 <section id="language-primitives" class="slide level1">
@@ -84,14 +84,14 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p><em>Expressions</em> are pure:</p>
 <ul>
 <li>evaluate to values</li>
-<li>flexible evalutaion order</li>
+<li>flexible evaluation order</li>
 <li>example: combinatorial circuits</li>
 </ul>
 <p><em>Statements</em> are effectful:</p>
 <ul>
 <li>have a notion of sequencing</li>
 <li>do this, then do that</li>
-<li>example: a recipie</li>
+<li>example: a recipe</li>
 </ul>
 </section>
 <section id="monads" class="slide level1">
@@ -128,9 +128,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">pure e <span class="fu">:</span> <span class="dt">L</span> a</code></pre></div>
 <p>In many languages this is implicit.</p>
 </section>
-<section id="monad-laws-resonable-behavior" class="slide level1">
-<h1>Monad Laws = Resonable Behavior</h1>
-<p>The grouping of staments is not important:</p>
+<section id="monad-laws-reasonable-behavior" class="slide level1">
+<h1>Monad Laws = Reasonable Behavior</h1>
+<p>The grouping of statements is not important:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">do</span> { y <span class="ot">&lt;-</span> <span class="kw">do</span> { x <span class="ot">&lt;-</span> s1; s2 }; s3 } <span class="fu">=</span>
 <span class="kw">do</span> { x <span class="ot">&lt;-</span> s1; <span class="kw">do</span> { y <span class="ot">&lt;-</span> s2; s3 } } <span class="fu">=</span>        <span class="co">-- modulo naming</span>
 <span class="kw">do</span> { x <span class="ot">&lt;-</span> s1; y <span class="ot">&lt;-</span> s2; s3 }</code></pre></div>
@@ -142,8 +142,8 @@ s                     <span class="fu">=</span>
 <section id="effects" class="slide level1">
 <h1>Effects</h1>
 <ul>
-<li>Monadic strucutre = bare minimum.</li>
-<li>We need statemtns that do something.</li>
+<li>Monadic structure = bare minimum.</li>
+<li>We need statements that do something.</li>
 </ul>
 <p>Example:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">getGreeting ::</span> <span class="dt">IO</span> <span class="dt">String</span>
@@ -157,40 +157,114 @@ main <span class="fu">=</span>
   <span class="kw">do</span> msg <span class="ot">&lt;-</span> getGreeting
      putStrLn msg</code></pre></div>
 </section>
-<section id="classes-of-effects" class="slide level1">
-<h1>Classes of Effects</h1>
-<ul>
-<li>Data effects (aka “variables”)
-<ul>
-<li>Read-only variables (e.g., configuration)</li>
-<li>Mutable variables</li>
-<li>Write-only variables (aka “collectors”, e.g., logs)</li>
-</ul></li>
-<li>Control effects
-<ul>
-<li>Exceptions (early termination)</li>
-<li>Backtracking (search)</li>
-<li>Continutations (coroutines)</li>
-</ul></li>
-</ul>
-</section>
 <section id="three-questions" class="slide level1">
 <h1>Three Questions</h1>
 <ol type="1">
-<li>How do we specify the features of a custom language?</li>
-<li>How do we write programs in a custom language?</li>
+<li>How do we specify the features of a language?</li>
+<li>How do we write programs in a language?</li>
 <li>How do we execute programs in the language?</li>
 </ol>
 </section>
 <section id="modular-language-construction" class="slide level1">
 <h1>Modular Language Construction</h1>
 <p>Start with a language of <em>primitives</em>, and extended with desired <em>features</em>.</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="dt">DeclareLanguage</span>
-  prim          <span class="co">-- Language of primitives</span>
-  [ f3          <span class="co">-- Feature 3</span>
-  , f2          <span class="co">-- Feature 2</span>
-  , f1          <span class="co">-- Feature 1</span>
-  ]</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">MyPL</span> <span class="fu">=</span>
+  <span class="dt">DeclareLanguage</span>
+    [ <span class="dt">F3</span>          <span class="co">-- Feature 3</span>
+    , <span class="dt">F2</span>          <span class="co">-- Feature 2</span>
+    , <span class="dt">F1</span>          <span class="co">-- Feature 1</span>
+    ]
+    <span class="dt">Prim</span>          <span class="co">-- Language of primitives</span></code></pre></div>
+<p>Primitive language examples:</p>
+<ul>
+<li><code>IO</code>: a language for interacting with the OS</li>
+<li><code>Pure</code>: no primitive language</li>
+</ul>
+</section>
+<section id="common-features" class="slide level1">
+<h1>Common Features</h1>
+<p>Data effects (aka variables)</p>
+<ul>
+<li><code>Val x t</code> adds an immutable variable</li>
+<li><code>Mut x t</code> adds a mutable variable</li>
+<li><code>Collector x t</code> adds a collector variable</li>
+</ul>
+<p>Control effects</p>
+<ul>
+<li><code>Throws t</code> add support for exceptions</li>
+<li><code>Backtracks</code> add support for backtracking</li>
+</ul>
+</section>
+<section id="feature-dependencies" class="slide level1">
+<h1>Feature Dependencies</h1>
+<p>The order in which features are added to a language is important (sometimes):</p>
+<ul>
+<li>Data effects are <em>orthogonal</em>: order is not important.</li>
+<li>Control effects are not: order in feature list matters.</li>
+</ul>
+<p>Rule:</p>
+<p><em>Existing features take precedence.</em></p>
+</section>
+<section id="example" class="slide level1">
+<h1>Example</h1>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">PL1</span> <span class="fu">=</span>                <span class="kw">type</span> <span class="dt">PL2</span> <span class="fu">=</span>
+  <span class="dt">DeclareLanguage</span>           <span class="dt">DeclareLanguage</span>
+    [ <span class="dt">Throws</span> e                [ <span class="dt">MutVar</span> x t
+    , <span class="dt">MutVar</span> x t              , <span class="dt">Throws</span> t
+    ] <span class="dt">Pure</span>                    ] <span class="dt">Pure</span></code></pre></div>
+<p>How do exceptions affect changes to <code>x</code>?</p>
+<ul>
+<li><code>PL1</code>: changes survive exceptions</li>
+<li><code>PL2</code>: changes are rolled back on exception</li>
+</ul>
+</section>
+<section id="writing-programs" class="slide level1">
+<h1>Writing Programs</h1>
+<ul>
+<li><p>Need a common notation for similar features across multiple language (e.g. read a variable).</p></li>
+<li><p>Exact behavior is determined by the language.</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">readVal   ::</span> <span class="dt">HasVal</span> x t m       <span class="ot">=&gt;</span> x <span class="ot">-&gt;</span> m t
+<span class="ot">getMut    ::</span> <span class="dt">HasMut</span> x t m       <span class="ot">=&gt;</span> x <span class="ot">-&gt;</span> m t
+<span class="ot">setMut    ::</span> <span class="dt">HasMut</span> x t m       <span class="ot">=&gt;</span> x <span class="ot">-&gt;</span> t <span class="ot">-&gt;</span> m ()
+<span class="ot">appendTo  ::</span> <span class="dt">HasCollector</span> x t m <span class="ot">=&gt;</span> x <span class="ot">-&gt;</span> t <span class="ot">-&gt;</span> m ()
+<span class="ot">throw     ::</span> <span class="dt">Throws</span> t m         <span class="ot">=&gt;</span> t <span class="ot">-&gt;</span> m a
+<span class="ot">backtrack ::</span> <span class="dt">Backtracks</span> m       <span class="ot">=&gt;</span> m a
+<span class="ot">orElse    ::</span> <span class="dt">Backtracks</span> m       <span class="ot">=&gt;</span> m a <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m a</code></pre></div>
+</section>
+<section id="running-programs" class="slide level1">
+<h1>Running Programs</h1>
+<p>Each feature can be “compiled” away:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">val        ::</span> <span class="dt">Language</span> m <span class="ot">=&gt;</span> (x <span class="fu">:=</span> t) <span class="ot">-&gt;</span> <span class="dt">Val</span> x t m a <span class="ot">-&gt;</span> m a
+
+<span class="ot">mut        ::</span> <span class="dt">Language</span> m <span class="ot">=&gt;</span> (x <span class="fu">:=</span> t) <span class="ot">-&gt;</span> <span class="dt">Mut</span> x t m a <span class="ot">-&gt;</span> m (a,t)
+
+<span class="ot">collector  ::</span> <span class="dt">Language</span> m <span class="ot">=&gt;</span> <span class="dt">Col</span> x t m a <span class="ot">-&gt;</span> m (a, [t])
+
+<span class="ot">throws     ::</span> <span class="dt">Language</span> m <span class="ot">=&gt;</span> <span class="dt">Throws</span> t m a <span class="ot">-&gt;</span> m (<span class="dt">Except</span> t a)
+
+<span class="ot">backtracks ::</span> <span class="dt">Language</span> m <span class="ot">=&gt;</span> <span class="dt">Maybe</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Backtracks</span> m a <span class="ot">-&gt;</span> m [a]</code></pre></div>
+<p>Or, we can compile and run the whole program:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">run ::</span> <span class="dt">Run</span> m <span class="ot">=&gt;</span> m a <span class="ot">-&gt;</span> <span class="dt">ExeResult</span> m a</code></pre></div>
+</section>
+<section id="scoped-statements" class="slide level1">
+<h1>Scoped Statements</h1>
+<p>Allow for “nested” statement execution.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">letVal    ::</span> <span class="dt">LetVal</span> x t m     <span class="ot">=&gt;</span> x <span class="fu">:=</span> t <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m a
+<span class="ot">collect   ::</span> <span class="dt">CanCollect</span> x t m <span class="ot">=&gt;</span> x <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m (a, [t])
+<span class="ot">try       ::</span> <span class="dt">CanCatch</span> t m     <span class="ot">=&gt;</span> m a <span class="ot">-&gt;</span> m (<span class="dt">Except</span> t a)
+<span class="ot">findUpTo  ::</span> <span class="dt">CanSearch</span> m      <span class="ot">=&gt;</span> <span class="dt">Maybe</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m [a]</code></pre></div>
+<p>Quite useful, much trickier semantics.</p>
+</section>
+<section id="bigger-example" class="slide level1">
+<h1>Bigger Example</h1>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">TCLang</span> <span class="fu">=</span>
+  [ <span class="dt">Throws</span> <span class="dt">TCError</span>              <span class="co">-- Critical errors</span>
+  , <span class="dt">Val</span> <span class="dt">Env</span>   (<span class="dt">Map</span> <span class="dt">Name</span> <span class="dt">Type</span>)   <span class="co">-- Types of free variables</span>
+  , <span class="dt">Mut</span> <span class="dt">Subst</span> (<span class="dt">Map</span> <span class="dt">TVar</span> <span class="dt">Type</span>)   <span class="co">-- Inferred types</span>
+  , <span class="dt">Col</span> <span class="dt">Ctrs</span>  (<span class="dt">Set</span> <span class="dt">Ctr</span>)         <span class="co">-- Collected constraints</span>
+  , <span class="dt">Col</span> <span class="dt">Warns</span> (<span class="dt">Set</span> <span class="dt">Warn</span>)        <span class="co">-- Warnings</span>
+  ] <span class="dt">IO</span>                          <span class="co">-- Interact with solvers</span></code></pre></div>
 </section>
     </div>
   </div>

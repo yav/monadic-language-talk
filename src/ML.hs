@@ -20,7 +20,7 @@ module ML
     -- ** Language Features
   , Val
   , Mut
-  , Collector
+  , Col
   , Throws
   , Backtracks
 
@@ -40,7 +40,7 @@ module ML
   , HasPrim(..)
   , HasVal(..)
   , HasMut(..)
-  , HasCollector(..)
+  , HasCol(..)
   , CanThrow(..)
   , CanBacktrack(..)
 
@@ -52,7 +52,7 @@ module ML
   , backtracks
   , noEffects
   , withIO
-  , Compile(..)
+  , Run(..)
 
     -- * Nested Effects
   , LetVal(..)
@@ -80,7 +80,7 @@ newtype Val x t m a       = V { unV :: t -> m a }
 newtype Mut x t m a       = M { unM :: t -> m (a,t) }
 
 -- | Extends language @m@ with a write-only variable @x@ of type @t@.
-newtype Collector x t m a = C { unC :: m (a, [t] -> [t]) }
+newtype Col x t m a = C { unC :: m (a, [t] -> [t]) }
 
 -- | Extends language @m@ with support for exception of type @t@.
 newtype Throws t m a  =
@@ -158,7 +158,7 @@ instance Language m => Monad (Mut x t m) where
   m >>= f   = M $ \s -> do (a,s1) <- unM m s
                            unM (f a) s1
 
-instance Language m => Monad (Collector x t m) where
+instance Language m => Monad (Col x t m) where
   m >>= f   = C $ do (a,xs) <- unC m
                      (b,ys) <- unC (f a)
                      pure (b, xs . ys)
@@ -190,7 +190,7 @@ instance Feature (Mut x t) where
   lift m = M (\s -> do a <- m
                        pure (a,s))
 
-instance Feature (Collector x t) where
+instance Feature (Col x t) where
   lift m = C (m >>= \a -> pure (a,id))
 
 instance Feature (Throws t) where
@@ -250,22 +250,22 @@ instance (TypeError ('Text "Undefined mutable variable " ':<>: 'ShowType x ':<>:
   setMut = undefined
 
 -- | Language @m@ supports a write-only variable @x@ of type @t@.
-class Language m => HasCollector x t m | m x -> t where
+class Language m => HasCol x t m | m x -> t where
   appendTo :: x -> t -> m ()
   -- ^ Append the given value to variable @x@.
 
 instance {-# OVERLAPPING #-}
-  (Language m, t ~ t') => HasCollector x t (Collector x t' m) where
+  (Language m, t ~ t') => HasCol x t (Col x t' m) where
   appendTo _ t = C (pure ((), (t:)))
 
 instance {-# OVERLAPPING #-}
-  (HasCollector x t m, Feature f) => HasCollector x t (f m) where
+  (HasCol x t m, Feature f) => HasCol x t (f m) where
   appendTo x t = lift (appendTo x t)
 
 instance (TypeError ('Text "Undefined collector variable " ':<>: 'ShowType x
                ':<>: 'Text " of type " ':<>: 'ShowType t)
-         , Language m, HasCollector x t m
-         ) => HasCollector x t m where
+         , Language m, HasCol x t m
+         ) => HasCol x t m where
   appendTo = undefined
 
 
@@ -311,7 +311,7 @@ instance CanBacktrack m => CanBacktrack (Mut x t m) where
   backtrack    = lift backtrack
   m `orElse` n = M $ \t -> unM m t `orElse` unM n t
 
-instance CanBacktrack m => CanBacktrack (Collector x t m) where
+instance CanBacktrack m => CanBacktrack (Col x t m) where
   backtrack    = lift backtrack
   m `orElse` n = C $ unC m `orElse` unC n
 
@@ -341,33 +341,33 @@ instance (HasPrim p m, Feature f) => HasPrim p (f m) where
 -- | Language @m@ supports temporary modifications to an immutable variable
 -- for the duration of the given program block.
 class HasVal x t m => LetVal x t m | x m -> t where
-  letVal :: x -> t -> m a -> m a
+  letVal :: x := t -> m a -> m a
 
 instance {-# OVERLAPPING #-}
   (t ~ t', Language m) => LetVal x t (Val x t' m) where
-  letVal _ t m = lift (unV m t)
+  letVal (_ := t) m = lift (unV m t)
 
 instance LetVal x t m => LetVal x t (Val y t' m) where
-  letVal x t m = V $ \t' -> letVal x t (unV m t')
+  letVal t m = V $ \t' -> letVal t (unV m t')
 
 instance LetVal x t m => LetVal x t (Mut y t' m) where
-  letVal x t m = M $ \t' -> letVal x t (unM m t')
+  letVal t m = M $ \t' -> letVal t (unM m t')
 
-instance LetVal x t m => LetVal x t (Collector y t' m) where
-  letVal x t m = C $ letVal x t (unC m)
+instance LetVal x t m => LetVal x t (Col y t' m) where
+  letVal t m = C $ letVal t (unC m)
 
 instance LetVal x t m => LetVal x t (Throws t' m) where
-  letVal x t m = T $ \k -> letVal x t (unT m xPure) `xThen` k
+  letVal t m = T $ \k -> letVal t (unT m xPure) `xThen` k
 
 instance LetVal x t m => LetVal x t (Backtracks m) where
-  letVal x t m = B $ \k -> letVal x t (unB m bPure) `bThen` k
+  letVal t m = B $ \k -> letVal t (unB m bPure) `bThen` k
 
 
 
 
 -- | Language @m@ supports collecting the output of a nested program block.
 -- The resulting statement produces no additional output to @x@.
-class HasCollector x t m => CanCollect x t m where
+class HasCol x t m => CanCollect x t m where
   collect :: x -> m a -> m (a,[t])
 
 instance CanCollect x t m => CanCollect x t (Val y t' m) where
@@ -379,11 +379,11 @@ instance CanCollect x t m => CanCollect x t (Mut y t' m) where
     where swap ((a,t'),t) = ((a,t),t')
 
 instance {-# OVERLAPPING #-}
-  (t ~ t', Language m) => CanCollect x t (Collector x t' m) where
+  (t ~ t', Language m) => CanCollect x t (Col x t' m) where
   collect _ m = C $ do (a,xs) <- unC m
                        pure ((a, xs []), id)
 
-instance CanCollect x t m => CanCollect x t (Collector y t' m) where
+instance CanCollect x t m => CanCollect x t (Col y t' m) where
   collect x m = C $ do res <- collect x (unC m)
                        pure (swap res)
     where swap ((a,t'),t) = ((a,t),t')
@@ -442,7 +442,7 @@ instance CanCatch t m => CanCatch t (Mut y t' m) where
                           Exception t      -> (Exception t, t')
                           Success (a,newT) -> (Success a, newT)
 
-instance CanCatch t m => CanCatch t (Collector y t' m) where
+instance CanCatch t m => CanCatch t (Col y t' m) where
   try m = C $ do res <- try (unC m)
                  pure (swap res)
     where swap res = case res of
@@ -495,7 +495,7 @@ instance CanSearch m => CanSearch (Mut x t m) where
 -- | This operation does not produce any output.  The outputs of the
 -- individaul threads are discarded.  If the output is of interest,
 -- then use 'collect' to make it part of the result.
-instance CanSearch m => CanSearch (Collector x t m) where
+instance CanSearch m => CanSearch (Col x t m) where
   findUpTo lim m = C $ do xs <- findUpTo lim (unC m)
                           pure (map fst xs, id)
 
@@ -530,14 +530,14 @@ val (_ := t) m = unV m t
 -- a mutable variable @x@, to one that does not use @x@ explicitly.
 -- The resulting program returns the final value of @x@ in addition
 -- to its result.
-mut :: Language m => x := t -> Mut x t m a -> m (a, x := t)
-mut (x := t) m = do (a,t') <- unM m t
-                    pure (a, x := t')
+mut :: Language m => x := t -> Mut x t m a -> m (a, t)
+mut (_ := t) m = do (a,t') <- unM m t
+                    pure (a, t')
 
 -- | Compile a program with a collector @x@ to one that does not
 -- collect explicitly.  The new program returns the collected values,
 -- in addition to the original program's result.
-collector :: Language m => Collector x t m a -> m (a, [t])
+collector :: Language m => Col x t m a -> m (a, [t])
 collector m = do (a,xs) <- unC m
                  pure (a, xs [])
 
@@ -568,37 +568,37 @@ withIO = id
 
 
 -- | Compile a program all the way to the primitive language.
-class Language m => Compile m where
+class Language m => Run m where
   type ExeResult m a
-  compile :: m a -> ExeResult m a
+  run :: m a -> ExeResult m a
 
-instance Compile m => Compile (Val x t m) where
+instance Run m => Run (Val x t m) where
   type ExeResult (Val x t m) a = x := t -> ExeResult m a
-  compile m x = compile (val x m)
+  run m x = run (val x m)
 
-instance Compile m => Compile (Mut x t m) where
-  type ExeResult (Mut x t m) a = x := t -> ExeResult m (a,x := t)
-  compile m x = compile (mut x m)
+instance Run m => Run (Mut x t m) where
+  type ExeResult (Mut x t m) a = x := t -> ExeResult m (a,t)
+  run m x = run (mut x m)
 
-instance Compile m => Compile (Collector x t m) where
-  type ExeResult (Collector x t m) a = ExeResult m (a, [t])
-  compile m = compile (collector m)
+instance Run m => Run (Col x t m) where
+  type ExeResult (Col x t m) a = ExeResult m (a, [t])
+  run m = run (collector m)
 
-instance Compile m => Compile (Throws t m) where
+instance Run m => Run (Throws t m) where
   type ExeResult (Throws t m) a = ExeResult m (Except t a)
-  compile m = compile (throws m)
+  run m = run (throws m)
 
-instance Compile m => Compile (Backtracks m) where
+instance Run m => Run (Backtracks m) where
   type ExeResult (Backtracks m) a = Maybe Int -> ExeResult m [a]
-  compile m n = compile (backtracks n m)
+  run m n = run (backtracks n m)
 
-instance Compile Pure where
+instance Run Pure where
   type ExeResult Pure a = a
-  compile = noEffects
+  run = noEffects
 
-instance Compile IO where
+instance Run IO where
   type ExeResult IO a = IO a
-  compile = withIO
+  run = withIO
 --------------------------------------------------------------------------------
 
 
@@ -608,7 +608,7 @@ instance Compile IO where
 instance               Functor Pure              where fmap = M.liftM
 instance Language m => Functor (Val x t m)       where fmap = M.liftM
 instance Language m => Functor (Mut x t m)       where fmap = M.liftM
-instance Language m => Functor (Collector x t m) where fmap = M.liftM
+instance Language m => Functor (Col x t m) where fmap = M.liftM
 instance Language m => Functor (Throws t m)      where fmap = M.liftM
 instance Language m => Functor (Backtracks m)    where fmap = M.liftM
 
@@ -632,7 +632,7 @@ instance Language m => Applicative (Backtracks m) where
   pure  = lift . pure
   (<*>) = M.ap
 
-instance Language m => Applicative (Collector x t m) where
+instance Language m => Applicative (Col x t m) where
   pure  = lift . pure
   (<*>) = M.ap
 

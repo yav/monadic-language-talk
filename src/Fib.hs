@@ -7,7 +7,7 @@ data Older = Older
 data Old   = Old
 
 -- The languae
-type FibFL =
+type FibPL =
   DeclareLanguage
     [ Mut Old   Int
     , Mut Older Int
@@ -15,13 +15,13 @@ type FibFL =
     Pure
 
 -- The program
-fibCode :: Int -> FibFL Int
+fibCode :: Int -> FibPL Int
 fibCode n =
   do replicateM_ n
-      do old   <- getMut Old
-         older <- getMut Older
-         setMut Older old
-         setMut Old (old + older)
+       do old   <- getMut Old
+          older <- getMut Older
+          setMut Older old
+          setMut Old  (old + older)
      getMut Older
 
 
@@ -30,8 +30,7 @@ fib :: Int -> Int
 fib n = result
   where
   ((result, _), _) =
-    compile
-      (fibCode n)
-      (Old    := 1)
-      (Older  := 0)
+   run (fibCode n)
+       (Old    := 1)
+       (Older  := 0)
 

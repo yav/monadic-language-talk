@@ -11,7 +11,7 @@ date: February 2019
 
   2. This is the essence of "monadic" programming.
 
-  3. What features does a host languge
+  3. What features does a host language
      need to support this style of software development?
 
 
@@ -21,14 +21,14 @@ date: February 2019
 _Expressions_ are pure:
 
   * evaluate to values
-  * flexible evalutaion order
+  * flexible evaluation order
   * example: combinatorial circuits
 
 _Statements_ are effectful:
 
   * have a notion of sequencing
   * do this, then do that
-  * example: a recipie
+  * example: a recipe
 
 
 # Monads
@@ -86,9 +86,9 @@ pure e : L a
 In many languages this is implicit.
 
 
-# Monad Laws = Resonable Behavior
+# Monad Laws = Reasonable Behavior
 
-The grouping of staments is not important:
+The grouping of statements is not important:
 
 ```haskell
 do { y <- do { x <- s1; s2 }; s3 } =
@@ -107,8 +107,8 @@ do { x <- s; pure x }
 
 # Effects
 
-  * Monadic strucutre = bare minimum.
-  * We need statemtns that do something.
+  * Monadic structure = bare minimum.
+  * We need statements that do something.
 
 Example:
 
@@ -125,22 +125,10 @@ main =
      putStrLn msg
 ```
 
-# Classes of Effects
-
-  * Data effects (aka "variables")
-      - Read-only variables (e.g., configuration)
-      - Mutable variables
-      - Write-only variables (aka "collectors", e.g., logs)
-
-  * Control effects
-      - Exceptions      (early termination)
-      - Backtracking    (search)
-      - Continutations  (coroutines)
-
 # Three Questions
 
-  1. How do we specify the features of a custom language?
-  2. How do we write programs in a custom language?
+  1. How do we specify the features of a language?
+  2. How do we write programs in a language?
   3. How do we execute programs in the language?
 
 
@@ -150,12 +138,126 @@ Start with a language of _primitives_, and extended with
 desired _features_.
 
 ```Haskell
-DeclareLanguage
-  prim          -- Language of primitives
-  [ f3          -- Feature 3
-  , f2          -- Feature 2
-  , f1          -- Feature 1
-  ]
+type MyPL =
+  DeclareLanguage
+    [ F3          -- Feature 3
+    , F2          -- Feature 2
+    , F1          -- Feature 1
+    ]
+    Prim          -- Language of primitives
+```
+
+Primitive language examples:
+
+  * `IO`: a language for interacting with the OS
+  * `Pure`: no primitive language
+
+
+# Common Features
+
+Data effects (aka variables)
+
+  * `Val x t` adds an immutable variable
+  * `Mut x t` adds a mutable variable
+  * `Collector x t` adds a collector variable
+
+Control effects
+
+  * `Throws t`    add support for exceptions
+  * `Backtracks`  add support for backtracking
+
+
+
+
+
+# Feature Dependencies
+
+The order in which features are added to a language is important (sometimes):
+
+  * Data effects are _orthogonal_: order is not important.
+  * Control effects are not:  order in feature list matters.
+
+Rule:
+
+  _Existing features take precedence._
+
+
+# Example
+
+```Haskell
+type PL1 =                type PL2 =
+  DeclareLanguage           DeclareLanguage
+    [ Throws e                [ MutVar x t
+    , MutVar x t              , Throws t
+    ] Pure                    ] Pure
+```
+
+How do exceptions affect changes to `x`?
+
+  * `PL1`: changes survive exceptions
+  * `PL2`: changes are rolled back on exception
+
+
+# Writing Programs
+
+* Need a common notation for similar features across multiple language
+    (e.g. read a variable).
+
+* Exact behavior is determined by the language.
+
+```Haskell
+readVal   :: HasVal x t m       => x -> m t
+getMut    :: HasMut x t m       => x -> m t
+setMut    :: HasMut x t m       => x -> t -> m ()
+appendTo  :: HasCollector x t m => x -> t -> m ()
+throw     :: Throws t m         => t -> m a
+backtrack :: Backtracks m       => m a
+orElse    :: Backtracks m       => m a -> m a -> m a
+```
+
+# Running Programs
+
+Each feature can be "compiled" away:
+
+```Haskell
+val        :: Language m => (x := t) -> Val x t m a -> m a
+
+mut        :: Language m => (x := t) -> Mut x t m a -> m (a,t)
+
+collector  :: Language m => Col x t m a -> m (a, [t])
+
+throws     :: Language m => Throws t m a -> m (Except t a)
+
+backtracks :: Language m => Maybe Int -> Backtracks m a -> m [a]
+```
+
+Or, we can compile and run the whole program:
+```Haskell
+run :: Run m => m a -> ExeResult m a
 ```
 
 
+# Scoped Statements
+
+Allow for "nested" statement execution.
+
+```Haskell
+letVal    :: LetVal x t m     => x := t -> m a -> m a
+collect   :: CanCollect x t m => x -> m a -> m (a, [t])
+try       :: CanCatch t m     => m a -> m (Except t a)
+findUpTo  :: CanSearch m      => Maybe Int -> m a -> m [a]
+```
+
+Quite useful, much trickier semantics.
+
+
+# Bigger Example
+```Haskell
+type TCLang =
+  [ Throws TCError              -- Critical errors
+  , Val Env   (Map Name Type)   -- Types of free variables
+  , Mut Subst (Map TVar Type)   -- Inferred types
+  , Col Ctrs  (Set Ctr)         -- Collected constraints
+  , Col Warns (Set Warn)        -- Warnings
+  ] IO                          -- Interact with solvers
+```
