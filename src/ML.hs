@@ -341,26 +341,26 @@ instance (HasPrim p m, Feature f) => HasPrim p (f m) where
 -- | Language @m@ supports temporary modifications to an immutable variable
 -- for the duration of the given program block.
 class HasVal x t m => LetVal x t m | x m -> t where
-  letVal :: x := t -> m a -> m a
+  letVal :: x -> t -> m a -> m a
 
 instance {-# OVERLAPPING #-}
   (t ~ t', Language m) => LetVal x t (Val x t' m) where
-  letVal (_ := t) m = lift (unV m t)
+  letVal _ t m = lift (unV m t)
 
 instance LetVal x t m => LetVal x t (Val y t' m) where
-  letVal t m = V $ \t' -> letVal t (unV m t')
+  letVal x t m = V $ \t' -> letVal x t (unV m t')
 
 instance LetVal x t m => LetVal x t (Mut y t' m) where
-  letVal t m = M $ \t' -> letVal t (unM m t')
+  letVal x t m = M $ \t' -> letVal x t (unM m t')
 
 instance LetVal x t m => LetVal x t (Col y t' m) where
-  letVal t m = C $ letVal t (unC m)
+  letVal x t m = C $ letVal x t (unC m)
 
 instance LetVal x t m => LetVal x t (Throws t' m) where
-  letVal t m = T $ \k -> letVal t (unT m xPure) `xThen` k
+  letVal x t m = T $ \k -> letVal x t (unT m xPure) `xThen` k
 
 instance LetVal x t m => LetVal x t (Backtracks m) where
-  letVal t m = B $ \k -> letVal t (unB m bPure) `bThen` k
+  letVal x t m = B $ \k -> letVal x t (unB m bPure) `bThen` k
 
 
 
