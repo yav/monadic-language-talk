@@ -100,32 +100,32 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </section>
 <section id="notation" class="slide level1">
 <h1>Notation</h1>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">s <span class="fu">:</span> <span class="dt">L</span> t</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">s ::</span> <span class="dt">L</span> t</code></pre></div>
 <ul>
 <li><code>s</code> is a statement,</li>
 <li>in language <code>L</code></li>
 <li>which produces a value of type <code>t</code>.</li>
 </ul>
 <p>Example:</p>
-<div class="sourceCode"><pre class="sourceCode c"><code class="sourceCode c">getchar() : C <span class="dt">int</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode c"><code class="sourceCode c">getchar() :: C <span class="dt">int</span></code></pre></div>
 </section>
 <section id="sequencing-statements" class="slide level1">
 <h1>Sequencing Statements</h1>
 <p>Combine statements to form more complex ones:</p>
 <p>If:</p>
 <ul>
-<li><code>s1 : L a</code></li>
-<li><code>s2 : L b</code>, with a free variable <code>x : a</code></li>
+<li><code>s1 :: L a</code></li>
+<li><code>s2 :: L b</code>, with a free variable <code>x :: a</code></li>
 </ul>
 <p>Then:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">do</span> { x <span class="ot">&lt;-</span> s1; s2 } <span class="fu">:</span> <span class="dt">L</span> b</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">do</span> { x <span class="ot">&lt;-</span> s1; s2 }<span class="ot"> ::</span> <span class="dt">L</span> b</code></pre></div>
 </section>
 <section id="promoting-expressions-to-statements" class="slide level1">
 <h1>Promoting Expressions to Statements</h1>
 <p>If:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">e <span class="fu">:</span> a        <span class="co">-- `e` is an expression</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">e ::</span> a        <span class="co">-- `e` is an expression</span></code></pre></div>
 <p>Then:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">pure e <span class="fu">:</span> <span class="dt">L</span> a</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">pure<span class="ot"> e ::</span> <span class="dt">L</span> a</code></pre></div>
 <p>In many languages this is implicit.</p>
 </section>
 <section id="monad-laws-reasonable-behavior" class="slide level1">
@@ -173,8 +173,7 @@ main <span class="fu">=</span>
     [ <span class="dt">F3</span>          <span class="co">-- Feature 3</span>
     , <span class="dt">F2</span>          <span class="co">-- Feature 2</span>
     , <span class="dt">F1</span>          <span class="co">-- Feature 1</span>
-    ]
-    <span class="dt">Prim</span>          <span class="co">-- Language of primitives</span></code></pre></div>
+    ] <span class="dt">Prim</span>        <span class="co">-- Language of primitives</span></code></pre></div>
 <p>Primitive language examples:</p>
 <ul>
 <li><code>IO</code>: a language for interacting with the OS</li>
@@ -203,7 +202,7 @@ main <span class="fu">=</span>
 <li>Control effects are not: order in feature list matters.</li>
 </ul>
 <p>Rule:</p>
-<p><em>Existing features take precedence.</em></p>
+<p><em>Existing features take precedence over new features.</em></p>
 </section>
 <section id="example" class="slide level1">
 <h1>Example</h1>
@@ -258,6 +257,7 @@ main <span class="fu">=</span>
 </section>
 <section id="bigger-example" class="slide level1">
 <h1>Bigger Example</h1>
+<p>A language for a type-checker:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">TCLang</span> <span class="fu">=</span>
   [ <span class="dt">Throws</span> <span class="dt">TCError</span>              <span class="co">-- Critical errors</span>
   , <span class="dt">Val</span> <span class="dt">Env</span>   (<span class="dt">Map</span> <span class="dt">Name</span> <span class="dt">Type</span>)   <span class="co">-- Types of free variables</span>
@@ -265,6 +265,32 @@ main <span class="fu">=</span>
   , <span class="dt">Col</span> <span class="dt">Ctrs</span>  (<span class="dt">Set</span> <span class="dt">Ctr</span>)         <span class="co">-- Collected constraints</span>
   , <span class="dt">Col</span> <span class="dt">Warns</span> (<span class="dt">Set</span> <span class="dt">Warn</span>)        <span class="co">-- Warnings</span>
   ] <span class="dt">IO</span>                          <span class="co">-- Interact with solvers</span></code></pre></div>
+</section>
+<section id="haskell-as-a-host-language" class="slide level1">
+<h1>Haskell as a Host Language</h1>
+<p>Haskell is a <em>great</em> language for experimenting with language design:</p>
+<ul>
+<li>Type system tracks language fragments</li>
+<li>Lazyness for custom control flow operators</li>
+<li>Functions for binders and modelling jumps</li>
+<li>Overloading for reusable notation</li>
+</ul>
+</section>
+<section id="drawbacks-of-embedding-in-haskell" class="slide level1">
+<h1>Drawbacks of Embedding in Haskell</h1>
+<ul>
+<li>Performance can be difficult to reason about</li>
+<li>Embedded notation not as neat as custom syntax</li>
+<li>Potentially confusing type errors
+<ul>
+<li>although custom type errors do help</li>
+</ul></li>
+</ul>
+</section>
+<section id="idea" class="slide level1">
+<h1>Idea</h1>
+<p>Experience with Haskell has identified a set of useful abstractions.</p>
+<p><em>Could we design a language that supports this style of programming directly?</em></p>
 </section>
     </div>
   </div>

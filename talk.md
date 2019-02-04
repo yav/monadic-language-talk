@@ -39,7 +39,7 @@ A _monad_ is a language that uses statements.
 # Notation
 
 ```Haskell
-s : L t
+s :: L t
 ```
 
   * `s` is a statement,
@@ -49,7 +49,7 @@ s : L t
 Example:
 
 ```C
-getchar() : C int
+getchar() :: C int
 ```
 
 
@@ -59,13 +59,13 @@ Combine statements to form more complex ones:
 
 If:
 
-  * `s1 : L a`
-  * `s2 : L b`, with a free variable `x : a`
+  * `s1 :: L a`
+  * `s2 :: L b`, with a free variable `x :: a`
 
 Then:
 
 ```Haskell
-do { x <- s1; s2 } : L b
+do { x <- s1; s2 } :: L b
 ```
 
 
@@ -74,13 +74,13 @@ do { x <- s1; s2 } : L b
 
 If:
 ```Haskell
-e : a        -- `e` is an expression
+e :: a        -- `e` is an expression
 ```
 
 Then:
 
 ```Haskell
-pure e : L a
+pure e :: L a
 ```
 
 In many languages this is implicit.
@@ -143,8 +143,7 @@ type MyPL =
     [ F3          -- Feature 3
     , F2          -- Feature 2
     , F1          -- Feature 1
-    ]
-    Prim          -- Language of primitives
+    ] Prim        -- Language of primitives
 ```
 
 Primitive language examples:
@@ -179,7 +178,7 @@ The order in which features are added to a language is important (sometimes):
 
 Rule:
 
-  _Existing features take precedence._
+  _Existing features take precedence over new features._
 
 
 # Example
@@ -252,6 +251,9 @@ Quite useful, much trickier semantics.
 
 
 # Bigger Example
+
+A language for a type-checker:
+
 ```Haskell
 type TCLang =
   [ Throws TCError              -- Critical errors
@@ -261,3 +263,29 @@ type TCLang =
   , Col Warns (Set Warn)        -- Warnings
   ] IO                          -- Interact with solvers
 ```
+
+
+# Haskell as a Host Language
+
+Haskell is a _great_ language for experimenting with language design:
+
+  * Type system tracks language fragments
+  * Lazyness for custom control flow operators
+  * Functions for binders and modelling jumps
+  * Overloading for reusable notation
+
+
+# Drawbacks of Embedding in Haskell
+
+  * Performance can be difficult to reason about
+  * Embedded notation not as neat as custom syntax
+  * Potentially confusing type errors
+    - although custom type errors do help
+
+# Idea
+
+Experience with Haskell has identified a set of useful abstractions.
+
+_Could we design a language that supports this style of programming
+directly?_
+
