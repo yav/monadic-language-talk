@@ -1,5 +1,5 @@
 ---
-author: Iavor S. Diatchki
+author: Iavor S. Diatchki, Galois Inc.
 title: Language Oriented Programming
 date: February 2019
 ---
