@@ -186,15 +186,32 @@ Rule:
 ```Haskell
 type PL1 =                type PL2 =
   DeclareLanguage           DeclareLanguage
-    [ Throws e                [ MutVar x t
-    , MutVar x t              , Throws t
+    [ Throws E                [ MutVar X T
+    , MutVar X T              , Throws E
     ] Pure                    ] Pure
 ```
 
-How do exceptions affect changes to `x`?
+How do exceptions affect changes to `X`?
 
   * `PL1`: changes survive exceptions
   * `PL2`: changes are rolled back on exception
+
+
+# Bigger Example
+
+A language for a type-checker:
+
+```Haskell
+type TCLang =
+  [ Throws TCError              -- Critical errors
+  , Val Env   (Map Name Type)   -- Types of free variables
+  , Mut Subst (Map TVar Type)   -- Inferred types
+  , Col Ctrs  (Set Ctr)         -- Collected constraints
+  , Col Warns (Set Warn)        -- Warnings
+  ] IO                          -- Interact with solvers
+```
+
+
 
 
 # Writing Programs
@@ -249,20 +266,6 @@ findUpTo  :: CanSearch m      => Maybe Int -> m a -> m [a]
 
 Quite useful, much trickier semantics.
 
-
-# Bigger Example
-
-A language for a type-checker:
-
-```Haskell
-type TCLang =
-  [ Throws TCError              -- Critical errors
-  , Val Env   (Map Name Type)   -- Types of free variables
-  , Mut Subst (Map TVar Type)   -- Inferred types
-  , Col Ctrs  (Set Ctr)         -- Collected constraints
-  , Col Warns (Set Warn)        -- Warnings
-  ] IO                          -- Interact with solvers
-```
 
 
 # Haskell as a Host Language

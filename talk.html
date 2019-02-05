@@ -208,14 +208,25 @@ main <span class="fu">=</span>
 <h1>Example</h1>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">PL1</span> <span class="fu">=</span>                <span class="kw">type</span> <span class="dt">PL2</span> <span class="fu">=</span>
   <span class="dt">DeclareLanguage</span>           <span class="dt">DeclareLanguage</span>
-    [ <span class="dt">Throws</span> e                [ <span class="dt">MutVar</span> x t
-    , <span class="dt">MutVar</span> x t              , <span class="dt">Throws</span> t
+    [ <span class="dt">Throws</span> <span class="dt">E</span>                [ <span class="dt">MutVar</span> <span class="dt">X</span> <span class="dt">T</span>
+    , <span class="dt">MutVar</span> <span class="dt">X</span> <span class="dt">T</span>              , <span class="dt">Throws</span> <span class="dt">E</span>
     ] <span class="dt">Pure</span>                    ] <span class="dt">Pure</span></code></pre></div>
-<p>How do exceptions affect changes to <code>x</code>?</p>
+<p>How do exceptions affect changes to <code>X</code>?</p>
 <ul>
 <li><code>PL1</code>: changes survive exceptions</li>
 <li><code>PL2</code>: changes are rolled back on exception</li>
 </ul>
+</section>
+<section id="bigger-example" class="slide level1">
+<h1>Bigger Example</h1>
+<p>A language for a type-checker:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">TCLang</span> <span class="fu">=</span>
+  [ <span class="dt">Throws</span> <span class="dt">TCError</span>              <span class="co">-- Critical errors</span>
+  , <span class="dt">Val</span> <span class="dt">Env</span>   (<span class="dt">Map</span> <span class="dt">Name</span> <span class="dt">Type</span>)   <span class="co">-- Types of free variables</span>
+  , <span class="dt">Mut</span> <span class="dt">Subst</span> (<span class="dt">Map</span> <span class="dt">TVar</span> <span class="dt">Type</span>)   <span class="co">-- Inferred types</span>
+  , <span class="dt">Col</span> <span class="dt">Ctrs</span>  (<span class="dt">Set</span> <span class="dt">Ctr</span>)         <span class="co">-- Collected constraints</span>
+  , <span class="dt">Col</span> <span class="dt">Warns</span> (<span class="dt">Set</span> <span class="dt">Warn</span>)        <span class="co">-- Warnings</span>
+  ] <span class="dt">IO</span>                          <span class="co">-- Interact with solvers</span></code></pre></div>
 </section>
 <section id="writing-programs" class="slide level1">
 <h1>Writing Programs</h1>
@@ -254,17 +265,6 @@ main <span class="fu">=</span>
 <span class="ot">try       ::</span> <span class="dt">CanCatch</span> t m     <span class="ot">=&gt;</span> m a <span class="ot">-&gt;</span> m (<span class="dt">Except</span> t a)
 <span class="ot">findUpTo  ::</span> <span class="dt">CanSearch</span> m      <span class="ot">=&gt;</span> <span class="dt">Maybe</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m [a]</code></pre></div>
 <p>Quite useful, much trickier semantics.</p>
-</section>
-<section id="bigger-example" class="slide level1">
-<h1>Bigger Example</h1>
-<p>A language for a type-checker:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">TCLang</span> <span class="fu">=</span>
-  [ <span class="dt">Throws</span> <span class="dt">TCError</span>              <span class="co">-- Critical errors</span>
-  , <span class="dt">Val</span> <span class="dt">Env</span>   (<span class="dt">Map</span> <span class="dt">Name</span> <span class="dt">Type</span>)   <span class="co">-- Types of free variables</span>
-  , <span class="dt">Mut</span> <span class="dt">Subst</span> (<span class="dt">Map</span> <span class="dt">TVar</span> <span class="dt">Type</span>)   <span class="co">-- Inferred types</span>
-  , <span class="dt">Col</span> <span class="dt">Ctrs</span>  (<span class="dt">Set</span> <span class="dt">Ctr</span>)         <span class="co">-- Collected constraints</span>
-  , <span class="dt">Col</span> <span class="dt">Warns</span> (<span class="dt">Set</span> <span class="dt">Warn</span>)        <span class="co">-- Warnings</span>
-  ] <span class="dt">IO</span>                          <span class="co">-- Interact with solvers</span></code></pre></div>
 </section>
 <section id="haskell-as-a-host-language" class="slide level1">
 <h1>Haskell as a Host Language</h1>
