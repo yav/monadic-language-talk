@@ -241,7 +241,7 @@ run :: Run m => m a -> ExeResult m a
 Allow for "nested" statement execution.
 
 ```Haskell
-letVal    :: LetVal x t m     => x := t -> m a -> m a
+letVal    :: LetVal x t m     => x -> t -> m a -> m a
 collect   :: CanCollect x t m => x -> m a -> m (a, [t])
 try       :: CanCatch t m     => m a -> m (Except t a)
 findUpTo  :: CanSearch m      => Maybe Int -> m a -> m [a]

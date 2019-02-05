@@ -249,7 +249,7 @@ main <span class="fu">=</span>
 <section id="scoped-statements" class="slide level1">
 <h1>Scoped Statements</h1>
 <p>Allow for “nested” statement execution.</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">letVal    ::</span> <span class="dt">LetVal</span> x t m     <span class="ot">=&gt;</span> x <span class="fu">:=</span> t <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m a
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">letVal    ::</span> <span class="dt">LetVal</span> x t m     <span class="ot">=&gt;</span> x <span class="ot">-&gt;</span> t <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m a
 <span class="ot">collect   ::</span> <span class="dt">CanCollect</span> x t m <span class="ot">=&gt;</span> x <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m (a, [t])
 <span class="ot">try       ::</span> <span class="dt">CanCatch</span> t m     <span class="ot">=&gt;</span> m a <span class="ot">-&gt;</span> m (<span class="dt">Except</span> t a)
 <span class="ot">findUpTo  ::</span> <span class="dt">CanSearch</span> m      <span class="ot">=&gt;</span> <span class="dt">Maybe</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m [a]</code></pre></div>

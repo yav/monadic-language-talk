@@ -42,7 +42,7 @@ module ML
   , HasMut(..)
   , HasCol(..)
   , CanThrow(..)
-  , CanBacktrack(..)
+  , CanBacktrack(..), options
 
     -- * Compiling Programs
   , val, (:=)(..)
@@ -57,7 +57,7 @@ module ML
     -- * Nested Effects
   , LetVal(..)
   , CanCollect(..)
-  , CanCatch(..)
+  , CanCatch(..), catch
   , CanSearch(..)
 
     -- * Misc
@@ -298,6 +298,13 @@ class Language m => CanBacktrack m where
   -- ^ Introduce a choice point---if the first computation backtracks,
   -- then proceed with the second.
 
+-- | Combine multiple options using 'orElse'.
+options :: CanBacktrack m => [m a] -> m a
+options opts =
+  case opts of
+    []     -> backtrack
+    m : ms -> m `orElse` options ms
+
 instance
   Language m => CanBacktrack (Backtracks m) where
   backtrack     = B (\_ -> pure NoAnswer)
@@ -474,6 +481,12 @@ instance CanCatch t m => CanCatch t (Backtracks m) where
 
      in go (unB m bPure)
 
+catch :: CanCatch t m => m a -> (t -> m a) -> m a
+m `catch` h =
+  do x <- try m
+     case x of
+       Success a   -> pure a
+       Exception t -> h t
 
 
 -- | Language @m@ supports finding the answers of a local backtracking block.
