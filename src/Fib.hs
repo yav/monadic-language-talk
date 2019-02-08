@@ -3,8 +3,8 @@
 import ML
 
 -- Names
-data Older = Older
-data Old   = Old
+data Older = Older deriving Show
+data Old   = Old   deriving Show
 
 -- The languae
 type FibPL =
@@ -20,8 +20,8 @@ fibCode n =
   do replicateM_ n
        do old   <- getMut Old
           older <- getMut Older
-          setMut Older old
-          setMut Old  (old + older)
+          setMut (Older := old)
+          setMut (Old   := old + older)
      getMut Older
 
 
@@ -29,7 +29,7 @@ fibCode n =
 fib :: Int -> Int
 fib n = result
   where
-  ((result, _), _) =
+  ((result, Old := _), Older := _) =
    run (fibCode n)
        (Old    := 1)
        (Older  := 0)

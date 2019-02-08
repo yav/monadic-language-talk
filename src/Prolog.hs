@@ -1,5 +1,3 @@
-:f
-
 {-# Language DataKinds, BlockArguments, OverloadedStrings #-}
 
 import Data.Map(Map)
@@ -56,7 +54,7 @@ type Prolog =
 freshVar :: Prolog Var
 freshVar =
   do n <- getMut NameSeed
-     setMut NameSeed (n+1)
+     setMut (NameSeed := n+1)
      pure ("X" ++ show n)
 
 freshCaluse :: Clause -> Prolog Clause
@@ -101,7 +99,7 @@ bindVar x t =
           | otherwise ->
             do su <- getMut Su
                let small = Map.singleton x t
-               setMut Su (Map.insert x t (apSubstSubst small su))
+               setMut (Su := Map.insert x t (apSubstSubst small su))
 
 
 solveUsing :: Clause -> Term -> Prolog ()
@@ -125,15 +123,17 @@ cut m =
 
 
 prolog :: [Clause] -> Maybe Int -> Term -> [ Subst ]
-prolog cs lim t = map restrict ans
+prolog cs lim t = [ Map.restrictKeys su vs | (_, Su := su) <- ans ]
   where
-  (ans,_) = run (solve t)
-                (Db       := cs)
-                (Su       := Map.empty)
-                lim
-                (NameSeed := 0)
-  restrict (_,su) = Map.restrictKeys su vs
   vs = fvsTerm t
+
+  (ans, NameSeed := _) =
+    run (solve t)
+        (Db       := cs)
+        (Su       := Map.empty)
+        lim
+        (NameSeed := 0)
+
 
 
 --------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ ppTerm = go (0::Int)
 
 ppSubst :: Subst -> String
 ppSubst = unlines . map sh . Map.toList
-  where sh (x,y) = x ++ " = " ++ ppTerm y
+  where sh (x,y) = "?" ++ x ++ " = " ++ ppTerm y
 
 
 

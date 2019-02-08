@@ -13,11 +13,11 @@ type PL2 =
     , Throws String
     ] Pure
 
-data X = X
+data X = X deriving Show
 
 sample :: (CanThrow String m, HasMut X Char m) => m ()
 sample =
-  do setMut X 'b'
+  do setMut (X := 'b')
      throw "Exception!"
 
 ex1 = run (sample :: PL1 ()) (X := 'a')

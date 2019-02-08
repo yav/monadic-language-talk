@@ -229,18 +229,18 @@ class Language m => HasMut x t m | m x -> t where
   getMut :: x -> m t
   -- ^ Get the value of variable @x@.
 
-  setMut :: x -> t -> m ()
+  setMut :: x := t -> m ()
   -- ^ Set the value of variable @x@.
 
 instance {-# OVERLAPPING #-}
   (Language m, t ~ t') => HasMut x t (Mut x t' m) where
-  getMut _ = M (\t -> pure (t,t))
-  setMut _ = \s -> M (\_ -> pure ((),s))
+  getMut _        = M (\t -> pure (t,t))
+  setMut (_ := s) = M (\_ -> pure ((),s))
 
 instance {-# OVERLAPPING #-}
   (HasMut x t m, Feature f) => HasMut x t (f m) where
-  getMut x   = lift (getMut x)
-  setMut x s = lift (setMut x s)
+  getMut x = lift (getMut x)
+  setMut x = lift (setMut x)
 
 instance (TypeError ('Text "Undefined mutable variable " ':<>: 'ShowType x ':<>:
                      'Text " of type " ':<>: 'ShowType t)
@@ -348,26 +348,26 @@ instance (HasPrim p m, Feature f) => HasPrim p (f m) where
 -- | Language @m@ supports temporary modifications to an immutable variable
 -- for the duration of the given program block.
 class HasVal x t m => LetVal x t m | x m -> t where
-  letVal :: x -> t -> m a -> m a
+  letVal :: x := t -> m a -> m a
 
 instance {-# OVERLAPPING #-}
   (t ~ t', Language m) => LetVal x t (Val x t' m) where
-  letVal _ t m = lift (unV m t)
+  letVal (_ := t) m = lift (unV m t)
 
 instance LetVal x t m => LetVal x t (Val y t' m) where
-  letVal x t m = V $ \t' -> letVal x t (unV m t')
+  letVal x m = V $ \t' -> letVal x (unV m t')
 
 instance LetVal x t m => LetVal x t (Mut y t' m) where
-  letVal x t m = M $ \t' -> letVal x t (unM m t')
+  letVal x m = M $ \t' -> letVal x (unM m t')
 
 instance LetVal x t m => LetVal x t (Col y t' m) where
-  letVal x t m = C $ letVal x t (unC m)
+  letVal x m = C $ letVal x (unC m)
 
 instance LetVal x t m => LetVal x t (Throws t' m) where
-  letVal x t m = T $ \k -> letVal x t (unT m xPure) `xThen` k
+  letVal x m = T $ \k -> letVal x (unT m xPure) `xThen` k
 
 instance LetVal x t m => LetVal x t (Backtracks m) where
-  letVal x t m = B $ \k -> letVal x t (unB m bPure) `bThen` k
+  letVal x m = B $ \k -> letVal x (unB m bPure) `bThen` k
 
 
 
@@ -533,6 +533,9 @@ instance Language m => CanSearch (Backtracks m) where
 
 -- | Just a convenient notatino for initializing variables.
 data x := t = x := t
+  deriving Show
+
+infix 2 :=
 
 -- | Given a value for @x@, compile a program that relies on immutable
 -- variable @x@, to one that does not use @x@ explicitly.
@@ -543,16 +546,16 @@ val (_ := t) m = unV m t
 -- a mutable variable @x@, to one that does not use @x@ explicitly.
 -- The resulting program returns the final value of @x@ in addition
 -- to its result.
-mut :: Language m => x := t -> Mut x t m a -> m (a, t)
-mut (_ := t) m = do (a,t') <- unM m t
-                    pure (a, t')
+mut :: Language m => x := t -> Mut x t m a -> m (a, x := t)
+mut (x := t) m = do (a,t') <- unM m t
+                    pure (a, x := t')
 
 -- | Compile a program with a collector @x@ to one that does not
 -- collect explicitly.  The new program returns the collected values,
 -- in addition to the original program's result.
-collector :: Language m => Col x t m a -> m (a, [t])
-collector m = do (a,xs) <- unC m
-                 pure (a, xs [])
+collector :: Language m => x -> Col x t m a -> m (a, x := [t])
+collector x m = do (a,xs) <- unC m
+                   pure (a, x := xs [])
 
 -- | Compile a program that may throw an exception of type @t@ to
 -- one that does not do so explicitly.
@@ -590,12 +593,12 @@ instance Run m => Run (Val x t m) where
   run m x = run (val x m)
 
 instance Run m => Run (Mut x t m) where
-  type ExeResult (Mut x t m) a = x := t -> ExeResult m (a,t)
+  type ExeResult (Mut x t m) a = x := t -> ExeResult m (a,x := t)
   run m x = run (mut x m)
 
 instance Run m => Run (Col x t m) where
-  type ExeResult (Col x t m) a = ExeResult m (a, [t])
-  run m = run (collector m)
+  type ExeResult (Col x t m) a = x -> ExeResult m (a, x := [t])
+  run m x = run (collector x m)
 
 instance Run m => Run (Throws t m) where
   type ExeResult (Throws t m) a = ExeResult m (Except t a)
